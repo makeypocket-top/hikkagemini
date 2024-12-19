@@ -1,7 +1,7 @@
 # meta developer: @gemeguardian
 # meta name: Gemini
 # meta description: Модуль для взаимодействия с моделью Gemini от Google.
-# meta version: 1.0.0
+# meta version: 1.0.1
 # meta license: GPLv3
 # meta command: gm
 
@@ -15,10 +15,10 @@ class GeminiMod(loader.Module):
     """Модуль для взаимодействия с моделью Gemini от Google."""
     strings = {
         "name": "Gemini",
-        "no_api_key": "🚫 Пожалуйста, установите API ключ Google AI в .config этого модуля.",
-        "processing": "⏳ Обработка запроса...",
-        "error": "🚫 Произошла ошибка при обработке запроса.",
-        "no_query": "🚫 Пожалуйста, введите запрос.",
+        "no_api_key": "🚫 <b>Пожалуйста, установите API ключ Google AI в .config этого модуля.</b>",
+        "processing": "⏳ <b>Обработка запроса...</b>",
+        "error": "🚫 <b>Произошла ошибка при обработке запроса.</b>",
+        "no_query": "🚫 <b>Пожалуйста, введите запрос.</b>",
         "gemini_api_key": "Ключ API для Google AI Gemini"
     }
     
@@ -49,20 +49,41 @@ class GeminiMod(loader.Module):
             await utils.answer(message, self.strings["no_query"])
             return
         
+        message = await utils.answer(message, self.strings["processing"])
+        
         try:
-            await utils.answer(message, self.strings["processing"])
             genai.configure(api_key=api_key)
             
             # Настройка модели
             generation_config = {
-              "temperature": 1,
-              "top_p": 0.95,
-              "top_k": 64,
-              "max_output_tokens": 8192,
+              "temperature": 0.9,
+              "top_p": 1,
+              "top_k": 1,
+              "max_output_tokens": 2048,
             }
 
+            safety_settings = [
+              {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+              },
+            ]
+
             model = genai.GenerativeModel(model_name="gemini-pro",
-                              generation_config=generation_config)
+                              generation_config=generation_config,
+                              safety_settings=safety_settings)
             
             response = await utils.run_sync(model.generate_content, args)
             
